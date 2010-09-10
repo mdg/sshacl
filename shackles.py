@@ -81,11 +81,9 @@ def shell_exec(cmd, args):
 def noop_exec(cmd, args, output_stream):
     """Simulate executing a command"""
     full_command = cmd.command(**args)
-    output_stream.write("Execute %s" % str(full_command))
+    output_stream.write("Execute %s\n" % str(full_command))
 
-def run_shell(lib, executor, input_stream, output_stream):
-    input_data = yaml.safe_load(input_stream)
-
+def run_shell(lib, executor, input_data, output_stream):
     args = dict()
     if 'args' in input_data:
         args = input_data['args']
@@ -102,25 +100,27 @@ def run_shell(lib, executor, input_stream, output_stream):
 def argument_parser():
     args = argparse.ArgumentParser()
     args.add_argument('-l', '--library'
+            , default='~/.shackles.yaml'
             , help='the library of potential actions that can be executed '
-            '(defaults to ~/.shackles.yaml)')
-    args.add_argument('--exec'
-            , help="the input file to be executed (defaults to stdin)")
+            '(default=~/.shackles.yaml)')
+    args.add_argument('-c', '--command'
+            , help="the command file to be executed (default=stdin)")
     return args
 
 
 def main():
     args = argument_parser()
-    args.parse_args()
+    opts = args.parse_args()
 
-    filename = '~/.shackles.yaml'
-
-    lib_file = open(filename)
-    lib_data = yaml.safe_load(lib_file)
-    lib_file.close()
-    lib_file = None
-
+    with open(opts.library) as lib_file:
+        lib_data = yaml.safe_load(lib_file)
     library = construct_library(lib_data)
+
+    if opts.command:
+        with open(opts.command) as cmd_file:
+            cmd_data = yaml.safe_load(cmd_file)
+    else:
+        cmd_data = yaml.safe_load(stdin)
 
     # Set the executor
     executor = shell_exec
@@ -128,7 +128,7 @@ def main():
         # Override the executor if noop option is specified
         executor = noop_exec
 
-    return run_shell(library, executor, stdin, stdout)
+    return run_shell(library, executor, cmd_data, stdout)
 
 if __name__ == "__main__":
     exit(main())
