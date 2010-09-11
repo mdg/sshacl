@@ -103,11 +103,17 @@ def shell_exec(cmd, args):
     """Execute a shackle command with the given arguments"""
     full_command = cmd.command(**args)
     subprocess.call(full_command)
+    return 0
 
-def noop_exec(cmd, args, output_stream):
-    """Simulate executing a command"""
-    full_command = cmd.command(**args)
-    output_stream.write("Execute %s\n" % str(full_command))
+def create_noop_exec(result=0):
+    """Create an executor function that only simulates executing a call
+
+    Can set the result explicitly upon creation"""
+    def f(cmd, args, output_stream):
+        full_command = cmd.command(**args)
+        output_stream.write("Execute %s\n" % str(full_command))
+        return result
+    return f
 
 def run_shell(lib, executor, input_data, output_stream):
     """Run the shell given the library, executor & input data
@@ -119,11 +125,11 @@ def run_shell(lib, executor, input_data, output_stream):
 
     if 'help' in input_data:
         output_stream.write(input_data['help'])
-        return 0
+        result = 0
     elif 'exec' in input_data:
         command_name = input_data['exec']
-        executor(lib[command_name], args, output_stream)
-    return 0
+        result = executor(lib[command_name], args, output_stream)
+    return result
 
 
 def argument_parser():

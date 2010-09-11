@@ -82,6 +82,8 @@ class NoopExecTest(unittest.TestCase):
         cmd = Command('cp', ['%(src)s', '%(dest)s'])
         args = {'src':'file1', 'dest':'file2'}
         output = StringIO()
-        result = noop_exec(cmd, args, output)
+        executor = create_noop_exec()
+        result = executor(cmd, args, output)
         self.assertEqual("Execute ['cp', 'file1', 'file2']\n"
                 , output.getvalue())
+        self.assertEqual(0, result)
