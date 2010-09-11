@@ -7,12 +7,23 @@ import argparse
 
 
 class ArgumentFormatError(Exception):
+    "Error for when a command argument can't be correctly formatted"
     def __init__(self, arg):
+        "Pass the argument that failed formatting"
         Exception.__init__(self, "Cannot format '%s'" % arg)
         self.arg = arg
 
 class Command(object):
+    "An object to store information about a command that can be called"
     def __init__(self, name, args=None, help_text=None):
+        """Construct the command
+
+        @name       the name of the command to be run
+        @args       list of arguments to be passed to the command
+                    can be templated
+        @help_text  description of what the command does; to be reported
+                    to clients
+        """
         self._name = name
         if args is None:
             args = []
@@ -20,9 +31,13 @@ class Command(object):
         self._help_text = help_text
 
     def name(self):
+        "Return te name of this command"
         return self._name
 
     def command(self, **kwargs):
+        """Convert the object into an array that can be executed
+
+        Format any arguments with kwargs as input to the argument template"""
         if not kwargs:
             kwargs = {}
 
@@ -32,7 +47,6 @@ class Command(object):
                 cmd.append(arg % kwargs)
             except ValueError, x:
                 raise ArgumentFormatError(arg)
-                #print '%s: "%s"' % (str(x), arg)
         return cmd
 
     def __repr__(self):
@@ -54,9 +68,11 @@ class CommandLibrary(object):
         self._commands[name] = Command(command, args, help_text)
 
     def __getitem__(self, name):
+        "Lookup any command based on its name"
         return self._commands[name]
 
     def command(self, name, **kwargs):
+        "Find the command and convert it with the kwargs"
         cmd = self._commands[name]
         return cmd.command(**kwargs)
 
@@ -64,6 +80,7 @@ class CommandLibrary(object):
         return "<CommandLibrary %s>" % repr(self._commands.values())
 
 def construct_library(lib_data):
+    '''Process YAML-loaded data into a library of command objects'''
     lib = CommandLibrary()
     for name, item in lib_data.iteritems():
         cmd = item['cmd']
@@ -93,6 +110,9 @@ def noop_exec(cmd, args, output_stream):
     output_stream.write("Execute %s\n" % str(full_command))
 
 def run_shell(lib, executor, input_data, output_stream):
+    """Run the shell given the library, executor & input data
+
+    Write the output to the output_stream"""
     args = dict()
     if 'args' in input_data:
         args = input_data['args']
@@ -107,6 +127,7 @@ def run_shell(lib, executor, input_data, output_stream):
 
 
 def argument_parser():
+    "Construct the argument parser for the command line"
     args = argparse.ArgumentParser()
     args.add_argument('-l', '--library'
             , default='~/.shackles.yaml'
