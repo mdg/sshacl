@@ -141,6 +141,9 @@ def argument_parser():
             '(default=~/.shackles.yaml)')
     args.add_argument('-c', '--command'
             , help="the command file to be executed (default=stdin)")
+    args.add_argument('-n', '--dry-run', dest='noop'
+            , action='store_true', default=False
+            , help="simulate what will be executed")
     return args
 
 
@@ -160,9 +163,9 @@ def main():
 
     # Set the executor
     executor = shell_exec
-    if True:
+    if opts.noop:
         # Override the executor if noop option is specified
-        executor = noop_exec
+        executor = create_noop_exec()
 
     return run_shell(library, executor, cmd_data, stdout)
 
