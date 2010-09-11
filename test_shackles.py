@@ -1,6 +1,7 @@
 from shackles import *
 import yaml
 import unittest
+from StringIO import StringIO
 
 
 class CommandTest(unittest.TestCase):
@@ -71,3 +72,13 @@ class ConstructLibraryTest(unittest.TestCase):
         self.assertEqual('ls', lib['test3'].name())
 
 
+class NoopExecTest(unittest.TestCase):
+    'Test behavior of the noop executor class'
+
+    def test_noop_exec_args(self):
+        cmd = Command('cp', ['%(src)s', '%(dest)s'])
+        args = {'src':'file1', 'dest':'file2'}
+        output = StringIO()
+        result = noop_exec(cmd, args, output)
+        self.assertEqual("Execute ['cp', 'file1', 'file2']\n"
+                , output.getvalue())
