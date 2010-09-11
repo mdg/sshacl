@@ -87,3 +87,16 @@ class NoopExecTest(unittest.TestCase):
         self.assertEqual("Execute ['cp', 'file1', 'file2']\n"
                 , output.getvalue())
         self.assertEqual(0, result)
+
+
+class RunShellTest(unittest.TestCase):
+    'Test the behavior of the run_shell function'
+
+    def test_run_shell(self):
+        lib = construct_library(yaml.load(TEST_CMD_YAML))
+        call_data = {'exec':'test2'}
+        output = StringIO()
+        result = run_shell(lib, create_noop_exec(), call_data, output)
+
+        self.assertEqual(0, result)
+        self.assertEqual("Execute ['pwd']\n", output.getvalue())
