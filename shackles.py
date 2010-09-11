@@ -6,6 +6,12 @@ import yaml
 import argparse
 
 
+class ArgumentFormatError(Exception):
+    def __init__(self, arg):
+        #Exception.__init__("Cannot format '%s'" % arg)
+        self.message = "Cannot format '%s'" % arg
+        self.arg = arg
+
 class Command(object):
     def __init__(self, name, args=None, help_text=None):
         self._name = name
@@ -23,7 +29,11 @@ class Command(object):
 
         cmd = [self._name]
         for arg in self._args:
-            cmd.append(arg % kwargs)
+            try:
+                cmd.append(arg % kwargs)
+            except ValueError, x:
+                raise ArgumentFormatError(arg)
+                #print '%s: "%s"' % (str(x), arg)
         return cmd
 
     def __repr__(self):

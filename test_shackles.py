@@ -24,6 +24,15 @@ class CommandTest(unittest.TestCase):
         self.assertEqual("yum", cmd.name())
         self.assertEqual(["yum", "install", "git"], cmd.command(rpm='git'))
 
+    def test_incomplete_format(self):
+        cmd = Command('cp', ['%(src)s', '%(dest)'])
+        args = {'src':'file1', 'dest':'file2'}
+        try:
+            cmd.command(**args)
+            self.fail("No exception was thrown")
+        except ArgumentFormatError, afe:
+            self.assertEqual("Cannot format '%(dest)'", str(afe))
+
 
 TEST_CMD_YAML = """
 test1:
