@@ -51,7 +51,17 @@ test3:
 """
 
 class CommandLibraryTest(unittest.TestCase):
-    """Tests for the SystemCmdLibrary object."""
+    """Tests for the command library object."""
+
+    def test_library_command(self):
+        "Test the library properly returns a subprocess cmd."
+        lib = CommandLibrary()
+        lib.add('test1', "ls", args=['match','dog'])
+        self.assertEqual(["ls", "match", "dog"], lib.command('test1'))
+
+
+class ConstructLibraryTest(unittest.TestCase):
+    """Tests for the construct library function"""
 
     def test_construct_library(self):
         'Test library construction'
@@ -60,9 +70,4 @@ class CommandLibraryTest(unittest.TestCase):
         self.assertEqual('pwd', lib['test2'].name())
         self.assertEqual('ls', lib['test3'].name())
 
-    def test_library_command(self):
-        "Test the library properly returns a subprocess cmd."
-        lib = CommandLibrary()
-        lib.add('test1', "ls", args=['match','dog'])
-        self.assertEqual(["ls", "match", "dog"], lib.command('test1'))
 
