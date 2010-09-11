@@ -4,40 +4,46 @@ import unittest
 from StringIO import StringIO
 
 
-class CommandTest(unittest.TestCase):
-    """Test the Command class"""
+class ActionTest(unittest.TestCase):
+    """Test the Action class"""
 
     def testNoParams(self):
-        "Test Command object created with no params"
-        cmd = Command("cat")
-        self.assertEqual("cat", cmd.name())
-        self.assertEqual(["cat"], cmd.command())
+        "Test Action object created with no params"
+        action = Action("cat")
+        self.assertEqual("cat", action.command())
+        self.assertEqual(["cat"], action.executable())
  
     def testOneStaticParam(self):
-        "Test Command object when created with 1 static param"
-        cmd = Command("cat", args=["/super/file"])
-        self.assertEqual("cat", cmd.name())
-        self.assertEqual(["cat", "/super/file"], cmd.command())
+        "Test Action object when created with 1 static param"
+        action = Action("cat", args=["/super/file"])
+        self.assertEqual("cat", action.command())
+        self.assertEqual(["cat", "/super/file"], action.executable())
 
     def testOneDynamicParam(self):
-        "test Command object when created with dynamic params"
-        cmd = Command("yum", args=["install", "%(rpm)s"])
-        self.assertEqual("yum", cmd.name())
-        self.assertEqual(["yum", "install", "git"], cmd.command(rpm='git'))
+        "test Action object when created with dynamic params"
+        action = Action("yum", args=["install", "%(rpm)s"])
+        self.assertEqual("yum", action.command())
+        self.assertEqual(["yum", "install", "git"]
+                , action.executable(rpm='git'))
 
     def test_incomplete_format(self):
-        'Test how a command handles an argument w/ a bad format string'
-        cmd = Command('cp', ['%(src)s', '%(dest)'])
+        'Test how an action handles an argument w/ a bad format string'
+        action = Action('cp', ['%(src)s', '%(dest)'])
         args = {'src':'file1', 'dest':'file2'}
         try:
-            cmd.command(**args)
+            action.executable(**args)
             self.fail("No exception was thrown")
         except ArgumentFormatError, afe:
             self.assertEqual("Cannot format '%(dest)'", str(afe))
             self.assertEqual("%(dest)", afe.arg)
 
+    def test_repr(self):
+        'Test how an action is converted to a string'
+        action = Action('cp', ['file1', 'file2'])
+        self.assertEqual("<Action cp>", repr(action))
 
-TEST_CMD_YAML = """
+
+TEST_LIBRARY_YAML = """
 test1:
     cmd: ls
     desc: Check for matching files.
@@ -53,14 +59,14 @@ test3:
       - "${color}"
 """
 
-class CommandLibraryTest(unittest.TestCase):
-    """Tests for the command library object."""
+class ActionLibraryTest(unittest.TestCase):
+    """Tests for the action library object."""
 
-    def test_library_command(self):
+    def test_library_executable(self):
         "Test the library properly returns a subprocess cmd."
-        lib = CommandLibrary()
+        lib = ActionLibrary()
         lib.add('test1', "ls", args=['match','dog'])
-        self.assertEqual(["ls", "match", "dog"], lib.command('test1'))
+        self.assertEqual(["ls", "match", "dog"], lib.executable('test1'))
 
 
 class ConstructLibraryTest(unittest.TestCase):
@@ -68,10 +74,10 @@ class ConstructLibraryTest(unittest.TestCase):
 
     def test_construct_library(self):
         'Test library construction'
-        lib = construct_library(yaml.load(TEST_CMD_YAML))
-        self.assertEqual('ls', lib['test1'].name())
-        self.assertEqual('pwd', lib['test2'].name())
-        self.assertEqual('ls', lib['test3'].name())
+        lib = construct_library(yaml.load(TEST_LIBRARY_YAML))
+        self.assertEqual('ls', lib['test1'].command())
+        self.assertEqual('pwd', lib['test2'].command())
+        self.assertEqual('ls', lib['test3'].command())
 
 
 class NoopExecTest(unittest.TestCase):
@@ -79,11 +85,11 @@ class NoopExecTest(unittest.TestCase):
 
     def test_noop_exec_args(self):
         'Test how noop_exec handles basic execution case'
-        cmd = Command('cp', ['%(src)s', '%(dest)s'])
+        action = Action('cp', ['%(src)s', '%(dest)s'])
         args = {'src':'file1', 'dest':'file2'}
         output = StringIO()
         executor = create_noop_exec()
-        result = executor(cmd, args, output)
+        result = executor(action, args, output)
         self.assertEqual("Execute ['cp', 'file1', 'file2']\n"
                 , output.getvalue())
         self.assertEqual(0, result)
@@ -96,14 +102,14 @@ class RunShellTest(unittest.TestCase):
         """Check that the shell correctly calls the live executor
 
         Ignores the output"""
-        lib = CommandLibrary()
+        lib = ActionLibrary()
         lib.add('ls', 'ls')
         call_data = {'exec':'ls'}
         result = run_shell(lib, shell_exec, call_data, StringIO())
         self.assertEquals(0, result)
 
     def test_run_noop_shell(self):
-        lib = construct_library(yaml.load(TEST_CMD_YAML))
+        lib = construct_library(yaml.load(TEST_LIBRARY_YAML))
         call_data = {'exec':'test2'}
         output = StringIO()
         result = run_shell(lib, create_noop_exec(), call_data, output)

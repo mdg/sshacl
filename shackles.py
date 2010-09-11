@@ -8,81 +8,81 @@ import argparse
 
 
 class ArgumentFormatError(Exception):
-    "Error for when a command argument can't be correctly formatted"
+    "Error for when an action's argument can't be correctly formatted"
     def __init__(self, arg):
         "Pass the argument that failed formatting"
         Exception.__init__(self, "Cannot format '%s'" % arg)
         self.arg = arg
 
-class Command(object):
-    "An object to store information about a command that can be called"
-    def __init__(self, name, args=None, help_text=None):
-        """Construct the command
+class Action(object):
+    "An object to store information about an action that can be called"
+    def __init__(self, cmd, args=None, help_text=None):
+        """Construct the action object
 
-        @name       the name of the command to be run
-        @args       list of arguments to be passed to the command
+        @cmd        the name of the command to be run
+        @args       list of arguments to be passed to the command;
                     can be templated
-        @help_text  description of what the command does; to be reported
+        @help_text  description of what the action does; to be reported
                     to clients
         """
-        self._name = name
+        self._cmd = cmd
         if args is None:
             args = []
         self._args = args
         self._help_text = help_text
 
-    def name(self):
-        "Return te name of this command"
-        return self._name
+    def command(self):
+        "Return the program that will be executed as part of this action"
+        return self._cmd
 
-    def command(self, **kwargs):
-        """Convert the object into an array that can be executed
+    def executable(self, **kwargs):
+        """Convert the action into a list that can be executed
 
         Format any arguments with kwargs as input to the argument template"""
         if not kwargs:
             kwargs = {}
 
-        cmd = [self._name]
+        exe = [self._cmd]
         for arg in self._args:
             try:
-                cmd.append(arg % kwargs)
+                exe.append(arg % kwargs)
             except ValueError, x:
                 raise ArgumentFormatError(arg)
-        return cmd
+        return exe
 
     def __repr__(self):
-        return "<Command %s>" % (self._name)
+        return "<Action %s>" % (self._cmd)
 
 
-class CommandLibrary(object):
-    """The set of commands that can be run on this system."""
+class ActionLibrary(object):
+    """The set of actions that can be run on this system."""
     def __init__(self):
-        self._commands = dict()
+        self._actions = dict()
 
     def add(self, name, command, args=None, help_text=None):
-        """Add a command to the library"""
+        """Add an action to the library"""
         if args is None:
             args = []
         if help_text is None:
             help_text = str()
 
-        self._commands[name] = Command(command, args, help_text)
+        self._actions[name] = Action(command, args, help_text)
 
     def __getitem__(self, name):
-        "Lookup any command based on its name"
-        return self._commands[name]
+        "Lookup any action based on its name"
+        return self._actions[name]
 
-    def command(self, name, **kwargs):
-        "Find the command and convert it with the kwargs"
-        cmd = self._commands[name]
-        return cmd.command(**kwargs)
+    def executable(self, name, **kwargs):
+        "Find the action and convert it to an executable with the kwargs"
+        action = self._actions[name]
+        return action.executable(**kwargs)
 
     def __repr__(self):
-        return "<CommandLibrary %s>" % repr(self._commands.values())
+        return "<ActionLibrary %s>" % repr(self._actions.values())
 
 def construct_library(lib_data):
     '''Process YAML-loaded data into a library of command objects'''
-    lib = CommandLibrary()
+    lib = ActionLibrary()
     for name, item in lib_data.iteritems():
         cmd = item['cmd']
 
@@ -100,36 +100,36 @@ def construct_library(lib_data):
     return lib
 
 
-def shell_exec(cmd, args, output_stream):
-    """Execute a shackle command with the given arguments"""
-    full_command = cmd.command(**args)
-    subprocess.call(full_command)
+def shell_exec(action, args, output_stream):
+    """Execute a shackle action with the given arguments"""
+    exe = action.executable(**args)
+    subprocess.call(exe)
     return 0
 
 def create_noop_exec(result=0):
     """Create an executor function that only simulates executing a call
 
     Can set the result explicitly upon creation"""
-    def f(cmd, args, output_stream):
-        full_command = cmd.command(**args)
-        output_stream.write("Execute %s\n" % str(full_command))
+    def f(action, args, output_stream):
+        exe = action.executable(**args)
+        output_stream.write("Execute %s\n" % str(exe))
         return result
     return f
 
-def run_shell(lib, executor, input_data, output_stream):
+def run_shell(lib, executor, call_data, output_stream):
     """Run the shell given the library, executor & input data
 
     Write the output to the output_stream"""
     args = dict()
-    if 'args' in input_data:
-        args = input_data['args']
+    if 'args' in call_data:
+        args = call_data['args']
 
-    if 'help' in input_data:
-        output_stream.write(input_data['help'])
+    if 'help' in call_data:
+        output_stream.write(call_data['help'])
         result = 0
-    elif 'exec' in input_data:
-        command_name = input_data['exec']
-        result = executor(lib[command_name], args, output_stream)
+    elif 'exec' in call_data:
+        action_name = call_data['exec']
+        result = executor(lib[action_name], args, output_stream)
     return result
 
 
@@ -140,8 +140,8 @@ def argument_parser():
             , default='~/.shackles.yaml'
             , help='the library of potential actions that can be executed '
             '(default=~/.shackles.yaml)')
-    args.add_argument('-c', '--command'
-            , help="the command file to be executed (default=stdin)")
+    args.add_argument('-c', '--call'
+            , help="the call file to be executed (default=stdin)")
     args.add_argument('-n', '--dry-run', dest='noop'
             , action='store_true', default=False
             , help="simulate what will be executed")
@@ -165,14 +165,14 @@ def main():
         lib_data = yaml.safe_load(lib_file)
     library = construct_library(lib_data)
 
-    if opts.command:
-        if not os.path.exists(opts.command):
-            die_from_missing_file('command', opts.command)
+    if opts.call:
+        if not os.path.exists(opts.call):
+            die_from_missing_file('call', opts.call)
 
-        with open(opts.command) as cmd_file:
-            cmd_data = yaml.safe_load(cmd_file)
+        with open(opts.command) as call_file:
+            call_data = yaml.safe_load(call_file)
     else:
-        cmd_data = yaml.safe_load(stdin)
+        call_data = yaml.safe_load(stdin)
 
     # Set the executor
     executor = shell_exec
@@ -180,7 +180,7 @@ def main():
         # Override the executor if noop option is specified
         executor = create_noop_exec()
 
-    return run_shell(library, executor, cmd_data, stdout)
+    return run_shell(library, executor, call_data, stdout)
 
 if __name__ == "__main__":
     exit(main())
