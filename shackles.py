@@ -8,8 +8,7 @@ import argparse
 
 class ArgumentFormatError(Exception):
     def __init__(self, arg):
-        #Exception.__init__("Cannot format '%s'" % arg)
-        self.message = "Cannot format '%s'" % arg
+        Exception.__init__(self, "Cannot format '%s'" % arg)
         self.arg = arg
 
 class Command(object):

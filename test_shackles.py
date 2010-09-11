@@ -33,6 +33,7 @@ class CommandTest(unittest.TestCase):
             self.fail("No exception was thrown")
         except ArgumentFormatError, afe:
             self.assertEqual("Cannot format '%(dest)'", str(afe))
+            self.assertEqual("%(dest)", afe.arg)
 
 
 TEST_CMD_YAML = """
