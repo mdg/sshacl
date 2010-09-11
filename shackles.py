@@ -1,6 +1,7 @@
 #! /usr/bin/env python
 
 from sys import stdin, stdout
+import os.path
 import subprocess
 import yaml
 import argparse
@@ -146,16 +147,28 @@ def argument_parser():
             , help="simulate what will be executed")
     return args
 
+def die_from_missing_file(file_type, path):
+    """Report a missing file error to the user and die
+    
+    Exit with code 1"""
+    print("%s file does not exist: %s" % (file_type, path))
+    exit(1)
 
 def main():
     args = argument_parser()
     opts = args.parse_args()
+
+    if not os.path.exists(opts.library):
+        die_from_missing_file('library', opts.library)
 
     with open(opts.library) as lib_file:
         lib_data = yaml.safe_load(lib_file)
     library = construct_library(lib_data)
 
     if opts.command:
+        if not os.path.exists(opts.command):
+            die_from_missing_file('command', opts.command)
+
         with open(opts.command) as cmd_file:
             cmd_data = yaml.safe_load(cmd_file)
     else:
