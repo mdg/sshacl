@@ -26,6 +26,7 @@ class CommandTest(unittest.TestCase):
         self.assertEqual(["yum", "install", "git"], cmd.command(rpm='git'))
 
     def test_incomplete_format(self):
+        'Test how a command handles an argument w/ a bad format string'
         cmd = Command('cp', ['%(src)s', '%(dest)'])
         args = {'src':'file1', 'dest':'file2'}
         try:
@@ -77,6 +78,7 @@ class NoopExecTest(unittest.TestCase):
     'Test behavior of the noop executor class'
 
     def test_noop_exec_args(self):
+        'Test how noop_exec handles basic execution case'
         cmd = Command('cp', ['%(src)s', '%(dest)s'])
         args = {'src':'file1', 'dest':'file2'}
         output = StringIO()
