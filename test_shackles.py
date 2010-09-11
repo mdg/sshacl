@@ -92,7 +92,17 @@ class NoopExecTest(unittest.TestCase):
 class RunShellTest(unittest.TestCase):
     'Test the behavior of the run_shell function'
 
-    def test_run_shell(self):
+    def test_run_live_shell(self):
+        """Check that the shell correctly calls the live executor
+
+        Ignores the output"""
+        lib = CommandLibrary()
+        lib.add('ls', 'ls')
+        call_data = {'exec':'ls'}
+        result = run_shell(lib, shell_exec, call_data, StringIO())
+        self.assertEquals(0, result)
+
+    def test_run_noop_shell(self):
         lib = construct_library(yaml.load(TEST_CMD_YAML))
         call_data = {'exec':'test2'}
         output = StringIO()

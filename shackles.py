@@ -99,7 +99,7 @@ def construct_library(lib_data):
     return lib
 
 
-def shell_exec(cmd, args):
+def shell_exec(cmd, args, output_stream):
     """Execute a shackle command with the given arguments"""
     full_command = cmd.command(**args)
     subprocess.call(full_command)
