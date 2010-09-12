@@ -154,6 +154,7 @@ def main():
     args = argument_parser()
     opts = args.parse_args()
 
+    # Load the library data
     if not os.path.exists(opts.library):
         die_from_missing_file('library', opts.library)
 
@@ -161,6 +162,7 @@ def main():
         lib_data = yaml.safe_load(lib_file)
     library = construct_library(lib_data)
 
+    # Load the call data
     if opts.call:
         if not os.path.exists(opts.call):
             die_from_missing_file('call', opts.call)
