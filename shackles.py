@@ -165,7 +165,7 @@ def main():
         if not os.path.exists(opts.call):
             die_from_missing_file('call', opts.call)
 
-        with open(opts.command) as call_file:
+        with open(opts.call) as call_file:
             call_data = yaml.safe_load(call_file)
     else:
         call_data = yaml.safe_load(stdin)
