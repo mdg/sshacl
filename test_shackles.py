@@ -10,25 +10,25 @@ class ActionTest(unittest.TestCase):
     def testNoParams(self):
         "Test Action object created with no params"
         action = Action("cat")
-        self.assertEqual("cat", action.command())
+        self.assertEqual("cat", action.cmd())
         self.assertEqual(["cat"], action.executable())
  
     def testOneStaticParam(self):
         "Test Action object when created with 1 static param"
-        action = Action("cat", args=["/super/file"])
-        self.assertEqual("cat", action.command())
+        action = Action("cat /super/file")
+        self.assertEqual("cat", action.cmd())
         self.assertEqual(["cat", "/super/file"], action.executable())
 
     def testOneDynamicParam(self):
         "test Action object when created with dynamic params"
-        action = Action("yum", args=["install", "%(rpm)s"])
-        self.assertEqual("yum", action.command())
+        action = Action("yum install %(rpm)s")
+        self.assertEqual("yum", action.cmd())
         self.assertEqual(["yum", "install", "git"]
                 , action.executable(rpm='git'))
 
     def test_incomplete_format(self):
         'Test how an action handles an argument w/ a bad format string'
-        action = Action('cp', ['%(src)s', '%(dest)'])
+        action = Action('cp %(src)s %(dest)')
         args = {'src':'file1', 'dest':'file2'}
         try:
             action.executable(**args)
@@ -45,18 +45,17 @@ class ActionTest(unittest.TestCase):
 
 TEST_LIBRARY_YAML = """
 test1:
-    cmd: ls
-    desc: Check for matching files.
-    arg: "${match}"
+    cmd: ls %(match)s
+    help: Check for matching files.
 test2:
     cmd: pwd
-    desc: Check the present directory.
+    help: Check the present directory.
 test3:
-    cmd: ls
-    desc: Check the present directory.
-    args:
-      - --color
-      - "${color}"
+    cmd: ls --color %(color)s
+    help: Check the present directory.
+cp_cmd:
+    cmd: cp %(file1)s %(file2)s
+    help: Copy one file to another
 """
 
 class ActionLibraryTest(unittest.TestCase):
@@ -65,7 +64,7 @@ class ActionLibraryTest(unittest.TestCase):
     def test_library_executable(self):
         "Test the library properly returns a subprocess cmd."
         lib = ActionLibrary()
-        lib.add('test1', "ls", args=['match','dog'])
+        lib.add('test1', "ls match dog")
         self.assertEqual(["ls", "match", "dog"], lib.executable('test1'))
 
 
@@ -75,9 +74,10 @@ class ConstructLibraryTest(unittest.TestCase):
     def test_construct_library(self):
         'Test library construction'
         lib = construct_library(yaml.load(TEST_LIBRARY_YAML))
-        self.assertEqual('ls', lib['test1'].command())
-        self.assertEqual('pwd', lib['test2'].command())
-        self.assertEqual('ls', lib['test3'].command())
+        self.assertEqual('ls', lib['test1'].cmd())
+        self.assertEqual('pwd', lib['test2'].cmd())
+        self.assertEqual('ls', lib['test3'].cmd())
+        self.assertEqual('cp', lib['cp_cmd'].cmd())
 
 
 class NoopExecTest(unittest.TestCase):
@@ -85,7 +85,7 @@ class NoopExecTest(unittest.TestCase):
 
     def test_noop_exec_args(self):
         'Test how noop_exec handles basic execution case'
-        action = Action('cp', ['%(src)s', '%(dest)s'])
+        action = Action('cp %(src)s %(dest)s')
         args = {'src':'file1', 'dest':'file2'}
         output = StringIO()
         executor = create_noop_exec()

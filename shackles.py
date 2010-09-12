@@ -2,6 +2,7 @@
 
 from sys import stdin, stdout
 import os.path
+import shlex
 import subprocess
 import yaml
 import argparse
@@ -16,22 +17,19 @@ class ArgumentFormatError(Exception):
 
 class Action(object):
     "An object to store information about an action that can be called"
-    def __init__(self, cmd, args=None, help_text=None):
+    def __init__(self, command_line, help_text=None):
         """Construct the action object
 
-        @cmd        the name of the command to be run
-        @args       list of arguments to be passed to the command;
-                    can be templated
-        @help_text  description of what the action does; to be reported
-                    to clients
+        @command_line  the name of the command to be run
+        @help_text     description of what the action does; to be reported
+                       to clients
         """
-        self._cmd = cmd
-        if args is None:
-            args = []
-        self._args = args
+        args = shlex.split(command_line)
+        self._cmd = args[0]
+        self._args = args[1:]
         self._help_text = help_text
 
-    def command(self):
+    def cmd(self):
         "Return the program that will be executed as part of this action"
         return self._cmd
 
@@ -59,14 +57,17 @@ class ActionLibrary(object):
     def __init__(self):
         self._actions = dict()
 
-    def add(self, name, command, args=None, help_text=None):
-        """Add an action to the library"""
-        if args is None:
-            args = []
+    def add(self, name, command_line, help_text=None):
+        """Add an action to the library
+        
+        @name          the name of this action
+        @command_line  the command line for this action, may include templates
+        @help_text     help text to be displayed to remote clients
+        """
         if help_text is None:
             help_text = str()
 
-        self._actions[name] = Action(command, args, help_text)
+        self._actions[name] = Action(command_line, help_text)
 
     def __getitem__(self, name):
         "Lookup any action based on its name"
@@ -86,17 +87,12 @@ def construct_library(lib_data):
     for name, item in lib_data.iteritems():
         cmd = item['cmd']
 
-        args = None
-        if 'args' in item:
-            args = item['args']
-        elif 'arg' in item:
-            args = [ item['arg'] ]
-
         help_text = None
         if 'help' in item:
             help_text = item['help']
 
-        lib.add(name, cmd, args, help_text)
+        lib.add(name, cmd, help_text)
+
     return lib
 
 

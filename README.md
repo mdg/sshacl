@@ -3,12 +3,14 @@ A server-side script for restricting a remote users privileges on the system.
 
 ## Sample Library
  restart_apache:
-     cmd: /etc/init.d/httpd
-     arg: restart
+     cmd: /etc/init.d/httpd restart
      help: Restart the apache service
  backup_db:
-     cmd: /opt/companyA/bin/backup.sh
-     arg: %(period)s
+     cmd: /opt/companyA/bin/backup.sh %(period)s
+     help: Backup the database for the given period
+ process_logs:
+     cmd: process_logs %(log_type)s %(application)s
+     help: Process a given type of log for the given application
 
 ## Sample Call
  exec: backup_db
