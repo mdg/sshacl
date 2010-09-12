@@ -89,7 +89,7 @@ class NoopExecTest(unittest.TestCase):
         args = {'src':'file1', 'dest':'file2'}
         output = StringIO()
         executor = create_noop_exec()
-        result = executor(action, args, output)
+        result = executor(action.executable(**args), output)
         self.assertEqual("Execute ['cp', 'file1', 'file2']\n"
                 , output.getvalue())
         self.assertEqual(0, result)

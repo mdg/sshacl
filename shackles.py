@@ -96,18 +96,15 @@ def construct_library(lib_data):
     return lib
 
 
-def shell_exec(action, args, output_stream):
+def shell_exec(exe, output_stream):
     """Execute a shackle action with the given arguments"""
-    exe = action.executable(**args)
-    subprocess.call(exe)
-    return 0
+    return subprocess.call(exe, stdout=output_stream)
 
 def create_noop_exec(result=0):
     """Create an executor function that only simulates executing a call
 
     Can set the result explicitly upon creation"""
-    def f(action, args, output_stream):
-        exe = action.executable(**args)
+    def f(exe, output_stream):
         output_stream.write("Execute %s\n" % str(exe))
         return result
     return f
@@ -116,16 +113,17 @@ def run_shell(lib, executor, call_data, output_stream):
     """Run the shell given the library, executor & input data
 
     Write the output to the output_stream"""
-    args = dict()
-    if 'args' in call_data:
-        args = call_data['args']
-
+    action_name = call_data['exec']
+    cmd = lib[action_name]
     if 'help' in call_data:
-        output_stream.write(call_data['help'])
+        output_stream.write(cmd.help_text())
         result = 0
     elif 'exec' in call_data:
-        action_name = call_data['exec']
-        result = executor(lib[action_name], args, output_stream)
+        args = dict()
+        if 'args' in call_data:
+            args = call_data['args']
+        exe = cmd.executable(**args)
+        result = executor(exe, output_stream)
     return result
 
 
