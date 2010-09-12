@@ -1,4 +1,4 @@
-# Shackles
+# sshacl
 A server-side script for restricting a remote users privileges on the system.
 
 ## Sample Library

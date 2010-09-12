@@ -101,7 +101,7 @@ def construct_library(lib_data):
 
 
 def shell_exec(exe, output_stream):
-    """Execute a shackle action with the given arguments"""
+    """Execute a sshacl action with the given arguments"""
     return subprocess.call(exe, stdout=output_stream)
 
 def create_noop_exec(result=0):
@@ -135,9 +135,9 @@ def argument_parser():
     "Construct the argument parser for the command line"
     args = argparse.ArgumentParser()
     args.add_argument('-l', '--library'
-            , default='~/.shackles.yaml'
+            , default='~/.sshacl.yaml'
             , help='the library of potential actions that can be executed '
-            '(default=~/.shackles.yaml)')
+            '(default=~/.sshacl.yaml)')
     args.add_argument('-c', '--call'
             , help="the call file to be executed (default=stdin)")
     args.add_argument('-n', '--dry-run', dest='noop'

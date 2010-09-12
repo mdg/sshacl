@@ -1,4 +1,4 @@
-from shackles import *
+from sshacl import *
 import yaml
 import unittest
 from StringIO import StringIO
@@ -111,7 +111,7 @@ class RunShellTest(unittest.TestCase):
         with TemporaryFile() as output:
             result = run_shell(lib, shell_exec, call_data, output)
             output.seek(0)
-            self.assertTrue('shackles.py' in output.read())
+            self.assertTrue('sshacl.py' in output.read())
         self.assertEquals(0, result)
 
     def test_run_noop_shell(self):
