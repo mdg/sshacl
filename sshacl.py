@@ -120,6 +120,7 @@ def run_shell(lib, executor, call_data, output_stream):
     if 'help' in call_data:
         help_action = lib[call_data['help']]
         output_stream.write(help_action.help_text())
+        output_stream.write("\n")
         result = 0
     elif 'exec' in call_data:
         action = lib[call_data['exec']]

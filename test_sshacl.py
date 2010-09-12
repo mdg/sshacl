@@ -129,4 +129,4 @@ class RunShellTest(unittest.TestCase):
         result = run_shell(self.test_lib, executor, call_data, output)
 
         self.assertEqual(0, result)
-        self.assertEqual('Copy one file to another', output.getvalue())
+        self.assertEqual('Copy one file to another\n', output.getvalue())
