@@ -98,6 +98,8 @@ class NoopExecTest(unittest.TestCase):
 
 class RunShellTest(unittest.TestCase):
     'Test the behavior of the run_shell function'
+    def setUp(self):
+        self.test_lib = construct_library(yaml.load(TEST_LIBRARY_YAML))
 
     def test_run_live_shell(self):
         """Check that the shell correctly calls the live executor
@@ -113,10 +115,18 @@ class RunShellTest(unittest.TestCase):
         self.assertEquals(0, result)
 
     def test_run_noop_shell(self):
-        lib = construct_library(yaml.load(TEST_LIBRARY_YAML))
         call_data = {'exec':'test2'}
         output = StringIO()
-        result = run_shell(lib, create_noop_exec(), call_data, output)
+        result = run_shell(self.test_lib, create_noop_exec(), call_data, output)
 
         self.assertEqual(0, result)
         self.assertEqual("Execute ['pwd']\n", output.getvalue())
+
+    def test_help_call(self):
+        call_data = {'help':'cp_cmd'}
+        executor = None # executor shouldn't be called for help
+        output = StringIO()
+        result = run_shell(self.test_lib, executor, call_data, output)
+
+        self.assertEqual(0, result)
+        self.assertEqual('Copy one file to another', output.getvalue())

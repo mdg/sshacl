@@ -33,6 +33,10 @@ class Action(object):
         "Return the program that will be executed as part of this action"
         return self._cmd
 
+    def help_text(self):
+        "Return the help for this action to be displayed to remote clients"
+        return self._help_text
+
     def executable(self, **kwargs):
         """Convert the action into a list that can be executed
 
@@ -113,16 +117,16 @@ def run_shell(lib, executor, call_data, output_stream):
     """Run the shell given the library, executor & input data
 
     Write the output to the output_stream"""
-    action_name = call_data['exec']
-    cmd = lib[action_name]
     if 'help' in call_data:
-        output_stream.write(cmd.help_text())
+        help_action = lib[call_data['help']]
+        output_stream.write(help_action.help_text())
         result = 0
     elif 'exec' in call_data:
+        action = lib[call_data['exec']]
         args = dict()
         if 'args' in call_data:
             args = call_data['args']
-        exe = cmd.executable(**args)
+        exe = action.executable(**args)
         result = executor(exe, output_stream)
     return result
 
